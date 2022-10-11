@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_location/location_worker.dart';
+import 'package:flutter_location/fetch_location_worker.dart';
+import 'package:flutter_location/qr_scanner_worker.dart';
+import 'package:flutter_location/snackbar_widget.dart';
 import 'package:location/location.dart';
 
 class LocationView extends StatefulWidget {
@@ -10,17 +12,18 @@ class LocationView extends StatefulWidget {
 }
 
 class _LocationViewState extends State<LocationView> {
+  LocationsWorker? locationWorker;
   LocationData? _locationData;
 
-  fetchLocation() async {
-    LocationWorker locationWorker = const LocationWorker();
-    await locationWorker.fetchLocationsDataAlongWithPermissions().getLocation().then((LocationData mLocationData) {
-      setState(() {
-        _locationData = mLocationData;
-      });
-    }).catchError((e) {
-      print("SomeErrorCameUp : $e");
-    });
+  fetchLocation() {
+    locationWorker = LocationsWorker(
+      callback: (locationData) {
+        setState(() {
+          _locationData = locationData;
+        });
+      },
+      context: context,
+    ).initLocation();
   }
 
   @override
@@ -42,7 +45,23 @@ class _LocationViewState extends State<LocationView> {
                   fetchLocation();
                 },
                 child: const Text("Get Current Location"),
-              )
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => QRScannerScreen(
+                        callback: (String result) {
+                          print("scanned_result : $result");
+                          showSnackBar(context, result);
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: const Text("Scan QR Code"),
+              ),
             ],
           ),
         ),

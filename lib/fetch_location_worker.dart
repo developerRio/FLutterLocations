@@ -1,27 +1,22 @@
+
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 
-class LocationWorker extends StatefulWidget {
-  const LocationWorker({Key? key}) : super(key: key);
-
-  @override
-  State<LocationWorker> createState() => _LocationWorkerState();
-
-  Location fetchLocationsDataAlongWithPermissions() {
-    return _LocationWorkerState().location;
-  }
-}
-
-class _LocationWorkerState extends State<LocationWorker> {
+class LocationsWorker {
+  final Function(LocationData locationData) callback;
   Location location = Location();
   bool? _serviceEnabled;
   PermissionStatus? _permissionStatus;
   LocationData? locationData;
+  final BuildContext context;
+  LocationsWorker({Key? key, required this.callback, required this.context});
+
 
   Future<bool> _handleLocationPermission() async {
     _serviceEnabled = await location.serviceEnabled();
 
     if (!_serviceEnabled!) {
+      debugPrint("");
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
               'Location services are disabled. Please enable the services')));
@@ -45,30 +40,22 @@ class _LocationWorkerState extends State<LocationWorker> {
     return true;
   }
 
-  Future<LocationData?> getCurrentPosition() async {
+  getCurrentPosition() async {
     print("fetching location...");
     final hasPermission = await _handleLocationPermission();
 
-    if (!hasPermission) return locationData;
+    if (!hasPermission) return;
     await location.getLocation().then((LocationData mLocationData) {
       locationData = mLocationData;
+      callback(mLocationData);
       print("location fetched !!!");
-      return locationData;
       //_getAddressFromLatLng(_locationData);
     }).catchError((e) {
       print("SomeErrorCameUp : $e");
-      return locationData;
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Container(),
-    );
+  initLocation() {
+    getCurrentPosition();
   }
-
-  void _getAddressFromLatLng(LocationData locationData) {}
-
 }
